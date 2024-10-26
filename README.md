@@ -45,20 +45,18 @@ You can check the date of last use of each command and how much times each comma
 
 Install the plugin in one of the following ways.
 
-- [Community Plugins browser (In preparation)](#community-plugins-browser-in-preparation)
+- [Community Plugins browser](#community-plugins-browser)
 - [Manually](#manually)
 - [BRAT Plugin Manager](#brat-plugin-manager)
 
-### Community Plugins browser (In preparation)
+### Community Plugins browser
 
-It's not on the community plugin yet, because now waiting Obsidian team for review.
-
-<!-- This plugin is available in Obsidian's Community Plugins Browser.
+This plugin is available in Obsidian's Community Plugins Browser.
 
 1. Launch the Obsidian application.
 1. Open the `Settings`, select `Community Plugins`, and select `Browse`.
 1. Search for `Command Tracker`, and click it.
-1. Click the `Install`. -->
+1. Click the `Install`.
 
 ### Manually
 
