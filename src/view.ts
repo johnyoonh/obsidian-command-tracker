@@ -1,5 +1,20 @@
 import dayjs from 'dayjs';
-import { CellClickedEvent, ColDef, ColGroupDef, GridApi, ITextFilterParams, TextMatcherParams, createGrid } from 'ag-grid-community';
+import {
+	CellClickedEvent,
+	ClientSideRowModelModule,
+	ColDef,
+	ColGroupDef,
+	GridApi,
+	ITextFilterParams,
+	ModuleRegistry,
+	TextMatcherParams,
+	colorSchemeDark,
+	createGrid,
+	themeQuartz,
+	TextFilterModule,
+	NumberFilterModule,
+	DateFilterModule,
+} from 'ag-grid-community';
 
 import { ItemView, Notice, Platform, Setting, WorkspaceLeaf } from 'obsidian';
 import { CommandTrackerDatabase, IHotkey } from './database';
@@ -7,6 +22,17 @@ import { CustomApp, Command, ViewType } from './types';
 import { DATE_FORMAT, Settings, VIEW_TYPE, ViewCommandTrackerSettings } from './settings';
 
 export const VIEW_TYPE_COMMAND_TRACKER = 'command-tracker-view';
+
+ModuleRegistry.registerModules([
+	ClientSideRowModelModule,
+	DateFilterModule,
+	NumberFilterModule,
+	TextFilterModule,
+]);
+
+const isDarkTheme = (): boolean => {
+	return document.body.classList.contains('theme-dark');
+};
 
 const compareName = (a: { [key: string]: string | number }, b: { [key: string]: string | number }): number => {
 	if (!a || typeof a.command !== 'string' || !b || typeof b.command !== 'string') {
@@ -36,6 +62,8 @@ export class CommandTrackerView extends ItemView {
 	private _records: IHotkey[] = [];
 	private _viewType: ViewType = VIEW_TYPE.perCmd;
 	private _gridApi: GridApi;
+	private _isDarkTheme: boolean;
+	private _themeObserver: MutationObserver;
 
 	private get _viewSettings(): ViewCommandTrackerSettings {
 		return this._settings.viewCommandTracker;
@@ -49,6 +77,8 @@ export class CommandTrackerView extends ItemView {
 		this._db = new CommandTrackerDatabase(appId);
 		Object.entries(commands.commands).forEach(([key, val]) => this._commandMap.set(key, { ...val, keys: [] }));
 		this.associateHotkeys(hotkeyManager.bakedIds, hotkeyManager.bakedHotkeys);
+		this._isDarkTheme = isDarkTheme();
+		this._themeObserver = this.onThemeChange(() => this.generateGrid());
 	}
 
 	getViewType(): string {
@@ -66,28 +96,23 @@ export class CommandTrackerView extends ItemView {
 		await this._db.open();
 		this._records = await this._db.getAll();
 		this.generateHeader();
-		const tableEl = this.containerEl.createDiv('ag-theme-quartz ct-table');
-		const gridOptions = {
-			onCellClicked: (event: CellClickedEvent) => {
-				if (navigator.clipboard) {
-					const value = event.column.getColDef().field === 'date' ? this.formatDate({ value: event.value }) : event.value;
-					if (value) {
-						navigator.clipboard.writeText(value).then(() => new Notice('Copied the cell value.'));
-					}
-				}
-			}
-		}
-		this._gridApi = createGrid(tableEl, gridOptions);
-
-		if (this._viewSettings.viewType === VIEW_TYPE.perCmd) {
-			this.displayRecordsPerCommand();
-		} else {
-			this.displayRecordsPerCommandAndDaily();
-		}
+		this.generateGrid();
 	}
 
 	async onClose(): Promise<void> {
+		this._themeObserver.disconnect();
 		this._db.close();
+	}
+
+	private onThemeChange(callback: () => void) {
+		const observer = new MutationObserver(() => {
+			if (this._isDarkTheme !== isDarkTheme()) {
+				this._isDarkTheme = !this._isDarkTheme;
+				callback();
+			}
+		});
+		observer.observe(document.body, { attributes: true, attributeFilter: ['class'] });	
+		return observer;
 	}
 
 	private associateHotkeys(bakedIds: string[], bakedHotkeys: { key: string, modifiers: string }[]): void {
@@ -141,6 +166,28 @@ export class CommandTrackerView extends ItemView {
 					}),
 				);
 		});
+	}
+
+	private generateGrid(): void {
+		this.containerEl.getElementsByClassName('ct-table').item(0)?.remove();
+		const tableEl = this.containerEl.createDiv('ct-table');
+		const gridOptions = {
+			onCellClicked: (event: CellClickedEvent) => {
+				if (navigator.clipboard) {
+					const value = event.column.getColDef().field === 'date' ? this.formatDate({ value: event.value }) : event.value;
+					if (value) {
+						navigator.clipboard.writeText(value).then(() => new Notice('Copied the cell value.'));
+					}
+				}
+			},
+			theme: isDarkTheme() ? themeQuartz.withPart(colorSchemeDark) : themeQuartz,
+		}
+		this._gridApi = createGrid(tableEl, gridOptions);
+		if (this._viewSettings.viewType === VIEW_TYPE.perCmd) {
+			this.displayRecordsPerCommand();
+		} else {
+			this.displayRecordsPerCommandAndDaily();
+		}
 	}
 
 	private displayRecordsPerCommand(): void {
