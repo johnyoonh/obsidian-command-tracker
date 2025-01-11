@@ -10,9 +10,6 @@ import { ConfirmReloadModal } from './confirm-reload-modal';
 
 dayjs.extend(customParseFormat);
 
-const MAXIMUM_RECORDS = 2000 as const;
-const RETENTION_PERIOD = 60 as const;
-
 const RUN_TYPE = {
 	hotkey: 'hotkey',
 	cmdPalette: 'command-palette',
@@ -96,7 +93,13 @@ export default class CommandTracker extends Plugin {
 	}
 
 	async loadSettings() {
-		this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData());
+		const loadData = await this.loadData();
+		this.settings = {
+			...DEFAULT_SETTINGS,
+			...loadData,
+			viewCommandTracker: { ...DEFAULT_SETTINGS.viewCommandTracker, ...loadData.viewCommandTracker },
+		};
+		await this.saveSettings();
 	}
 
 	async saveSettings() {
@@ -117,11 +120,13 @@ export default class CommandTracker extends Plugin {
 
 	private async deleteRecords(): Promise<void> {
 		const records = await this._db.getAll();
-		if (records.length >= MAXIMUM_RECORDS) {
-			const referenceUid = records.length - MAXIMUM_RECORDS + (records[0].uid ?? 0);
+		const maximumRecords = this.settings.viewCommandTracker.maximumRecords;
+		if (records.length >= maximumRecords) {
+			const referenceUid = records.length - maximumRecords + (records[0].uid ?? 0);
 			await this._db.deleteExceededRecords(referenceUid);
 		}
-		const referenceDate = parseInt(dayjs().subtract(RETENTION_PERIOD, 'd').format('YYYYMMDD'), 10);
+		const retentionPeriod = this.settings.viewCommandTracker.retentionPeriod;
+		const referenceDate = parseInt(dayjs().subtract(retentionPeriod, 'd').format('YYYYMMDD'), 10);
 		await this._db.deleteOverdueRecords(referenceDate);
 	}
 
@@ -145,18 +150,18 @@ export default class CommandTracker extends Plugin {
 		}
 	}
 
-	private saveCurrentVersionNumber() {
+	private async saveCurrentVersionNumber() {
 		const currentVersion = this.manifest.version;
 		const knownVersion = this.settings.viewCommandTracker.version;
 		if (knownVersion) {
 			if (currentVersion !== knownVersion) {
 				this.settings.viewCommandTracker.version = currentVersion;
-				this.saveSettings();
+				await this.saveSettings();
 				new ConfirmReloadModal(this.app).open();
 			}
 		} else {
 			this.settings.viewCommandTracker.version = currentVersion;
-			this.saveSettings();
+			await this.saveSettings();
 		}
 	}
 }

@@ -12,6 +12,8 @@ export interface ViewCommandTrackerSettings {
 	dateFormat: string;
 	isProtectData: boolean;
 	isStopTracing: boolean;
+	maximumRecords: number;
+	retentionPeriod: number;
 	version: string;
 }
 
@@ -30,11 +32,26 @@ export const DATE_FORMAT: Record<string, string> = {
 	ddmmyyyy: 'dd/mm/yyyy',
 };
 
+export const MAXIMUM_RECORD_COUNT: number[] = [
+	2000,
+	3000,
+	4000,
+];
+
+export const RETENTION_PERIOD: number[] = [
+	60,
+	90,
+	180,
+	365,
+];
+
 const VIEW_COMMAND_TRACKER_DEFAULT_SETTINGS = {
 	viewType: VIEW_TYPE.perCmd,
 	dateFormat: DATE_FORMAT.yyyymmdd,
 	isProtectData: false,
 	isStopTracing: false,
+	maximumRecords: 2000,
+	retentionPeriod: 60,
 	version: '',
 } as const;
 
@@ -134,6 +151,38 @@ export class SettingTab extends PluginSettingTab {
 		}
 
 		new Setting(containerEl)
+			.setName(`Maximum records`)
+			.setDesc(`Set the maximum number of records to keep. When the number of records exceeds this value, the oldest record is deleted.`)
+			.addDropdown(item => item
+				.addOptions(MAXIMUM_RECORD_COUNT.reduce((obj, v) => (obj[v] = `${v}`, obj), {} as Record<number, string>))
+				.setValue(`${settings.maximumRecords}`)
+				.onChange(async value => {
+					settings.maximumRecords = parseInt(value, 10);
+					await this.plugin.saveData(this.plugin.settings);
+				}),
+			)
+			.then(settingEl => {
+				const setDefaultValue = () => settings.maximumRecords = DEFAULT_SETTINGS[settingType].maximumRecords;
+				this.addResetButton(settingEl, setDefaultValue);
+			});		
+		
+		new Setting(containerEl)
+			.setName(`Retention period`)
+			.setDesc(`Set the retention period in days. When a new record is written, records exceeding this value from the date of use are deleted.`)
+			.addDropdown(item => item
+				.addOptions(RETENTION_PERIOD.reduce((obj, v) => (obj[v] = `${v}`, obj), {} as Record<number, string>))
+				.setValue(`${settings.retentionPeriod}`)
+				.onChange(async value => {
+					settings.retentionPeriod = parseInt(value, 10);
+					await this.plugin.saveData(this.plugin.settings);
+				}),
+			)
+			.then(settingEl => {
+				const setDefaultValue = () => settings.retentionPeriod = DEFAULT_SETTINGS[settingType].retentionPeriod;
+				this.addResetButton(settingEl, setDefaultValue);
+			});
+
+		new Setting(containerEl)
 			.setName('Delete all data')
 			.setDesc('Delete all data of "Command Tracker". If you want to delete, type "Delete" in the text box and click the "Delete" button.')
 			.addText(text => text
@@ -175,8 +224,8 @@ export class SettingTab extends PluginSettingTab {
 				const LiEl = ulEl.createEl('li');
 				LiEl.setText('Some data is deleted in the following cases.');
 				const childUlEl = LiEl.createEl('ul');
-				childUlEl.createEl('li').setText('When the number of records exceeds 2000 lines and a new record is written, the oldest record is deleted.');
-				childUlEl.createEl('li').setText('When a new record is written, records exceeding 60 days from the date of use are deleted.');	
+				childUlEl.createEl('li').setText('When the number of records exceeds the configured maximum (default 2000) and a new record is written, the oldest record is deleted.');
+				childUlEl.createEl('li').setText('When a new record is written, records that have exceeded the retention period set from the date of use (default 60 days) are deleted.');	
 			}
 		});
 	}
