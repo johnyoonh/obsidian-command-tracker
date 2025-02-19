@@ -85,7 +85,7 @@ export default class CommandTracker extends Plugin {
 			this._uninstallWrapper.onChooseItem();
 			this._uninstallWrapper.onChooseItem = undefined;
 		}
-		if (Platform.isDesktopApp && this.settings.viewCommandTracker.isProtectData) {
+		if (Platform.isDesktopApp && this.settings.viewCommandTracker?.isProtectData) {
 			this._db.close();
 		} else {
 			await this._db.deleteDatabase();
@@ -97,7 +97,7 @@ export default class CommandTracker extends Plugin {
 		this.settings = {
 			...DEFAULT_SETTINGS,
 			...loadData,
-			viewCommandTracker: { ...DEFAULT_SETTINGS.viewCommandTracker, ...loadData.viewCommandTracker },
+			viewCommandTracker: { ...DEFAULT_SETTINGS.viewCommandTracker, ...loadData?.viewCommandTracker || {} },
 		};
 		await this.saveSettings();
 	}
