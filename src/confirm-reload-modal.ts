@@ -5,7 +5,7 @@ export class ConfirmReloadModal extends Modal {
 		super(app);
 	}
 
-	onOpen() {
+	onOpen(): void {
 		this.modalEl.addClasses(['confirm-reload-modal', 'ct-modal']);
 
 		const titleEl = this.contentEl.createEl('h4');
@@ -31,7 +31,7 @@ export class ConfirmReloadModal extends Modal {
 		});
 	}
 
-	onClose() {
+	onClose(): void {
 		this.contentEl.empty();
 	}
 }

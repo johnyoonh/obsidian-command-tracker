@@ -30,7 +30,7 @@ export default class CommandTracker extends Plugin {
 		onChooseItem?: () => void
 	} = {};
 
-	async onload() {
+	async onload(): Promise<void> {
 		await this.loadSettings();
 
 		this.registerView(
@@ -76,7 +76,7 @@ export default class CommandTracker extends Plugin {
 		this.saveCurrentVersionNumber();
 	}
 
-	async onunload() {
+	async onunload(): Promise<void> {
 		if (this._uninstallWrapper.executeCommand) {
 			this._uninstallWrapper.executeCommand();
 			this._uninstallWrapper.executeCommand = undefined;
@@ -92,7 +92,7 @@ export default class CommandTracker extends Plugin {
 		}
 	}
 
-	async loadSettings() {
+	async loadSettings(): Promise<void> {
 		const loadData = await this.loadData();
 		this.settings = {
 			...DEFAULT_SETTINGS,
@@ -102,7 +102,7 @@ export default class CommandTracker extends Plugin {
 		await this.saveSettings();
 	}
 
-	async saveSettings() {
+	async saveSettings(): Promise<void> {
 		await this.saveData(this.settings);
 	}
 
@@ -150,7 +150,7 @@ export default class CommandTracker extends Plugin {
 		}
 	}
 
-	private async saveCurrentVersionNumber() {
+	private async saveCurrentVersionNumber(): Promise<void> {
 		const currentVersion = this.manifest.version;
 		const knownVersion = this.settings.viewCommandTracker.version;
 		if (knownVersion) {
