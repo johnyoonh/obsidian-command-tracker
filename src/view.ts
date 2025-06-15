@@ -56,7 +56,6 @@ const compareDate = (selectedDate: Date, cellValue: number): number => {
 }
 
 export class CommandTrackerView extends ItemView {
-	private _settings: Settings;
 	private _db: CommandTrackerDatabase;
 	private _commandMap = new Map<string, Command & { keys: string[] }>();
 	private _records: IHotkey[] = [];
@@ -69,10 +68,9 @@ export class CommandTrackerView extends ItemView {
 		return this._settings.viewCommandTracker;
 	}
 
-	constructor(leaf: WorkspaceLeaf, settings: Settings) {
+	constructor(leaf: WorkspaceLeaf, private _settings: Settings) {
 		super(leaf);
 
-		this._settings = settings;
 		const { appId, commands, hotkeyManager = { bakedIds: [], bakedHotkeys: [] } } = this.app as CustomApp;
 		this._db = new CommandTrackerDatabase(appId);
 		Object.entries(commands.commands).forEach(([key, val]) => this._commandMap.set(key, { ...val, keys: [] }));

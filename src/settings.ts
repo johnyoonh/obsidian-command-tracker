@@ -62,13 +62,12 @@ export const DEFAULT_SETTINGS: Settings = {
 const DELETION_CONFIRMATION_TEXT = 'Delete';
 
 export class SettingTab extends PluginSettingTab {
-	plugin: CommandTracker;
 	private _deleteBtn: ButtonComponent;
 	private _db: CommandTrackerDatabase;
 
-	constructor(app: App, plugin: CommandTracker) {
-		super(app, plugin);
-		this.plugin = plugin;
+	constructor(app: App, private _plugin: CommandTracker) {
+		super(app, _plugin);
+
 		this._db = new CommandTrackerDatabase((this.app as CustomApp).appId);
 		this._db.open();
 	}
@@ -84,7 +83,7 @@ export class SettingTab extends PluginSettingTab {
 
 	private setForViewCommandTrackerCommand(containerEl: HTMLElement): void {
 		const settingType = SETTING_TYPE.viewCommandTracker;
-		const settings = this.plugin.settings[settingType];
+		const settings = this._plugin.settings[settingType];
 
 		new Setting(containerEl)
 			.setName(`Initial view type`)
@@ -94,7 +93,7 @@ export class SettingTab extends PluginSettingTab {
 				.setValue(settings.viewType)
 				.onChange(async value => {
 					settings.viewType = value;
-					await this.plugin.saveData(this.plugin.settings);
+					await this._plugin.saveData(this._plugin.settings);
 				}),
 			)
 			.then(settingEl => {
@@ -110,7 +109,7 @@ export class SettingTab extends PluginSettingTab {
 				.setValue(settings.dateFormat)
 				.onChange(async value => {
 					settings.dateFormat = value;
-					await this.plugin.saveData(this.plugin.settings);
+					await this._plugin.saveData(this._plugin.settings);
 				}),
 			)
 			.then(settingEl => {
@@ -125,7 +124,7 @@ export class SettingTab extends PluginSettingTab {
 				.setValue(settings.isStopTracing)
 				.onChange(async value => {
 					settings.isStopTracing = value;
-					await this.plugin.saveData(this.plugin.settings);
+					await this._plugin.saveData(this._plugin.settings);
 				}),
 			)
 			.then(settingEl => {
@@ -141,7 +140,7 @@ export class SettingTab extends PluginSettingTab {
 					.setValue(settings.isProtectData)
 					.onChange(async value => {
 						settings.isProtectData = value;
-						await this.plugin.saveData(this.plugin.settings);
+						await this._plugin.saveData(this._plugin.settings);
 					}),
 				)
 				.then(settingEl => {
@@ -158,7 +157,7 @@ export class SettingTab extends PluginSettingTab {
 				.setValue(`${settings.maximumRecords}`)
 				.onChange(async value => {
 					settings.maximumRecords = parseInt(value, 10);
-					await this.plugin.saveData(this.plugin.settings);
+					await this._plugin.saveData(this._plugin.settings);
 				}),
 			)
 			.then(settingEl => {
@@ -174,7 +173,7 @@ export class SettingTab extends PluginSettingTab {
 				.setValue(`${settings.retentionPeriod}`)
 				.onChange(async value => {
 					settings.retentionPeriod = parseInt(value, 10);
-					await this.plugin.saveData(this.plugin.settings);
+					await this._plugin.saveData(this._plugin.settings);
 				}),
 			)
 			.then(settingEl => {
@@ -237,7 +236,7 @@ export class SettingTab extends PluginSettingTab {
 				.setTooltip('Reset to default')
 				.onClick(async () => {
 					setDefaultValue();
-					await this.plugin.saveSettings();
+					await this._plugin.saveSettings();
 					if (refreshView) {
 						this.display();
 					}

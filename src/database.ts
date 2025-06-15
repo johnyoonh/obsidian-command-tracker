@@ -11,16 +11,13 @@ export interface IHotkey {
 const STORE_NAME = 'command-history';
 
 export class CommandTrackerDatabase {
-	private _appId: string
 	private _db: IDBPDatabase<IHotkey>;
 
 	private get databaseName(): string {
 		return `${this._appId}-CommandTracker`;
 	}
 
-	constructor(appId: string) {
-		this._appId = appId;
-	}
+	constructor(private _appId: string) {}
 
 	async open(): Promise<void> {
 		this._db = await openDB(this.databaseName, 1, {
