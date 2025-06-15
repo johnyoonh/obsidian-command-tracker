@@ -29,7 +29,7 @@
 	},
 	"dependencies": {
 		"ag-grid-community": "^33.0.2",
-		"dayjs": "^1.11.11",
+		"dayjs": "^1.11.13",
 		"idb": "^8.0.0",
 		"monkey-around": "^3.0.0"
 	}
