@@ -1,38 +1,38 @@
 {
-	"name": "obsidian-command-tracker",
-	"version": "0.3.3",
-	"description": "This is an Obsidian plugin which tracks the number of times the command is used.",
-	"main": "main.js",
-	"scripts": {
-		"dev": "run-p esbuild sass-build",
-		"build": "run-p esbuild:prod sass-build",
-		"esbuild": "node esbuild.config.mjs",
-		"esbuild:prod": "tsc -noEmit -skipLibCheck && node esbuild.config.mjs production",
-		"sass-build": "sass --no-source-map *.scss styles.css",
-		"version": "node version-bump.mjs && git add manifest.json versions.json"
-	},
-	"keywords": [],
-	"author": "namikaze-40p",
-	"license": "MIT",
-	"devDependencies": {
-		"@types/node": "^16.11.6",
-		"@typescript-eslint/eslint-plugin": "^8.42.0",
-		"@typescript-eslint/parser": "^8.42.0",
-		"builtin-modules": "3.3.0",
-		"cspell": "^8.4.1",
-		"esbuild": "^0.25.1",
-		"eslint": "^8.57.1",
-		"npm-run-all": "^4.1.5",
-		"obsidian": "latest",
-		"prettier": "3.6.2",
-		"sass": "^1.77.2",
-		"tslib": "2.4.0",
-		"typescript": "^5.9.2"
-	},
-	"dependencies": {
-		"ag-grid-community": "^33.0.2",
-		"dayjs": "^1.11.13",
-		"idb": "^8.0.0",
-		"monkey-around": "^3.0.0"
-	}
+  "name": "obsidian-command-tracker",
+  "version": "0.3.3",
+  "description": "This is an Obsidian plugin which tracks the number of times the command is used.",
+  "main": "main.js",
+  "scripts": {
+    "dev": "run-p esbuild sass-build",
+    "build": "run-p esbuild:prod sass-build",
+    "esbuild": "node esbuild.config.mjs",
+    "esbuild:prod": "tsc -noEmit -skipLibCheck && node esbuild.config.mjs production",
+    "sass-build": "sass --no-source-map *.scss styles.css",
+    "version": "node version-bump.mjs && git add manifest.json versions.json"
+  },
+  "keywords": [],
+  "author": "namikaze-40p",
+  "license": "MIT",
+  "devDependencies": {
+    "@types/node": "^16.11.6",
+    "@typescript-eslint/eslint-plugin": "^8.42.0",
+    "@typescript-eslint/parser": "^8.42.0",
+    "builtin-modules": "3.3.0",
+    "cspell": "^8.4.1",
+    "esbuild": "^0.25.1",
+    "eslint": "^8.57.1",
+    "npm-run-all": "^4.1.5",
+    "obsidian": "latest",
+    "prettier": "3.6.2",
+    "sass": "^1.77.2",
+    "tslib": "2.4.0",
+    "typescript": "^5.9.2"
+  },
+  "dependencies": {
+    "ag-grid-community": "^33.0.2",
+    "dayjs": "^1.11.13",
+    "idb": "^8.0.0",
+    "monkey-around": "^3.0.0"
+  }
 }

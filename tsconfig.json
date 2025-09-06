@@ -10,14 +10,9 @@
     "moduleResolution": "node",
     "importHelpers": true,
     "isolatedModules": true,
-	"strictNullChecks": true,
-	"allowSyntheticDefaultImports": true,
-    "lib": [
-      "DOM",
-      "ES2022"
-    ]
+    "strictNullChecks": true,
+    "allowSyntheticDefaultImports": true,
+    "lib": ["DOM", "ES2022"]
   },
-  "include": [
-    "**/*.ts"
-  ]
+  "include": ["**/*.ts"]
 }

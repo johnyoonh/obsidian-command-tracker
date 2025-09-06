@@ -1,83 +1,83 @@
 // For Command Tracker
 .ct-view-content {
-	padding: 1rem;
+  padding: 1rem;
 
-	& .ct-first-line {
-		display: flex;
-		justify-content: space-between;
-		align-items: center;
+  & .ct-first-line {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
 
-		> button:active:hover {
-			position: relative;
-			top: 2px;
-		}
-	}
+    > button:active:hover {
+      position: relative;
+      top: 2px;
+    }
+  }
 
-	& .ct-view-selector {
-		font-weight: bold;
-		width: max-content;
-		max-width: 100%;
-	}
+  & .ct-view-selector {
+    font-weight: bold;
+    width: max-content;
+    max-width: 100%;
+  }
 
-	& .ct-table {
-		height: 100%;
-		width: 100%;
-	}
+  & .ct-table {
+    height: 100%;
+    width: 100%;
+  }
 }
 
 body.is-phone .ct-view-content {
-	overflow-y: scroll;
+  overflow-y: scroll;
 
-	& .ct-view-selector {
-		width: 100%;
-	}
+  & .ct-view-selector {
+    width: 100%;
+  }
 
-	& .ct-table {
-		margin-bottom: 74px;
+  & .ct-table {
+    margin-bottom: 74px;
 
-		& .ag-root-wrapper {
-			height: calc(100vh - (74px + 2rem));
-		}
-	}
+    & .ag-root-wrapper {
+      height: calc(100vh - (74px + 2rem));
+    }
+  }
 }
 
 .ct-modal {
-	.modal-content {
-		display: flex;
-		flex-direction: column;
-		padding: 1rem 0.5rem 0;
-		gap: 0.5rem;
+  .modal-content {
+    display: flex;
+    flex-direction: column;
+    padding: 1rem 0.5rem 0;
+    gap: 0.5rem;
 
-		h4 {
-			margin-top: 0;
-		}
+    h4 {
+      margin-top: 0;
+    }
 
-		.ct-buttons {
-			display: flex;
-			justify-content: flex-end;
-			gap: 0.5rem;
-		}
-	}
+    .ct-buttons {
+      display: flex;
+      justify-content: flex-end;
+      gap: 0.5rem;
+    }
+  }
 }
 
 .ct-settings {
-	& .ct-delete-input {
-		width: 5rem;
-		min-width: 5rem;
-	}
+  & .ct-delete-input {
+    width: 5rem;
+    min-width: 5rem;
+  }
 
-	& .ct-delete-description {
-		margin-top: 1rem;
-		padding: 0.75rem 0;
-		border-top: 1px solid var(--background-modifier-border);
+  & .ct-delete-description {
+    margin-top: 1rem;
+    padding: 0.75rem 0;
+    border-top: 1px solid var(--background-modifier-border);
 
-		& > ul {
-			margin-top: 0.5rem;
-			padding-left: 1rem;
-		}
+    & > ul {
+      margin-top: 0.5rem;
+      padding-left: 1rem;
+    }
 
-		& li {
-			margin: 0.25rem 0;
-		}
-	}
+    & li {
+      margin: 0.25rem 0;
+    }
+  }
 }

@@ -1,6 +1,6 @@
 import dayjs from 'dayjs';
 import customParseFormat from 'dayjs/plugin/customParseFormat';
-import { around } from 'monkey-around'
+import { around } from 'monkey-around';
 import { App, Platform, Plugin } from 'obsidian';
 import { DEFAULT_SETTINGS, SettingTab, Settings } from './settings';
 import { CustomApp, CommandPalettePluginInstance, Command, PluginInstance } from './types';
@@ -11,157 +11,165 @@ import { ConfirmReloadModal } from './confirm-reload-modal';
 dayjs.extend(customParseFormat);
 
 const RUN_TYPE = {
-	hotkey: 'hotkey',
-	cmdPalette: 'command-palette',
+  hotkey: 'hotkey',
+  cmdPalette: 'command-palette',
 } as const;
 
-type RunType = typeof RUN_TYPE[keyof typeof RUN_TYPE];
+type RunType = (typeof RUN_TYPE)[keyof typeof RUN_TYPE];
 
 export const getEnabledPluginById = (app: App, pluginId: string): PluginInstance | null => {
-	return (app as CustomApp)?.internalPlugins?.getEnabledPluginById(pluginId) || null;
+  return (app as CustomApp)?.internalPlugins?.getEnabledPluginById(pluginId) || null;
 };
 
 export default class CommandTracker extends Plugin {
-	settings: Settings;
-	private _settingTab: SettingTab;
-	private _db: CommandTrackerDatabase;
-	private _uninstallWrapper: {
-		executeCommand?: () => void,
-		onChooseItem?: () => void
-	} = {};
+  settings: Settings;
+  private _settingTab: SettingTab;
+  private _db: CommandTrackerDatabase;
+  private _uninstallWrapper: {
+    executeCommand?: () => void;
+    onChooseItem?: () => void;
+  } = {};
 
-	async onload(): Promise<void> {
-		await this.loadSettings();
+  async onload(): Promise<void> {
+    await this.loadSettings();
 
-		this.registerView(
-			VIEW_TYPE_COMMAND_TRACKER,
-			(leaf) => new CommandTrackerView(leaf, this.settings),
-		);
+    this.registerView(
+      VIEW_TYPE_COMMAND_TRACKER,
+      (leaf) => new CommandTrackerView(leaf, this.settings),
+    );
 
-		this.addCommand({
-			id: 'view-command-tracker',
-			name: 'View command tracker',
-			callback: async () => this.viewCommandTracker(),
-		});
+    this.addCommand({
+      id: 'view-command-tracker',
+      name: 'View command tracker',
+      callback: async () => this.viewCommandTracker(),
+    });
 
-		this._settingTab = new SettingTab(this.app, this);
-		this.addSettingTab(this._settingTab);
+    this._settingTab = new SettingTab(this.app, this);
+    this.addSettingTab(this._settingTab);
 
-		this.app.workspace.onLayoutReady(async () => {
-			this._db = new CommandTrackerDatabase((this.app as CustomApp).appId);
-			await this._db.open();
-			const handlingDatabase = this.handlingDatabase.bind(this);
-			this._uninstallWrapper.executeCommand = around((this.app as CustomApp).commands, {
-				executeCommand(orgMethod): (command: Command, ev: Event) => boolean {
-					return (command: Command, ev: Event) => {
-						handlingDatabase(command, RUN_TYPE.hotkey);
-						return orgMethod && orgMethod.call(this, command, ev);
-					};
-				},
-			});
+    this.app.workspace.onLayoutReady(async () => {
+      this._db = new CommandTrackerDatabase((this.app as CustomApp).appId);
+      await this._db.open();
+      const handlingDatabase = this.handlingDatabase.bind(this);
+      this._uninstallWrapper.executeCommand = around((this.app as CustomApp).commands, {
+        executeCommand(orgMethod): (command: Command, ev: Event) => boolean {
+          return (command: Command, ev: Event) => {
+            handlingDatabase(command, RUN_TYPE.hotkey);
+            return orgMethod && orgMethod.call(this, command, ev);
+          };
+        },
+      });
 
-			const commandPalette = getEnabledPluginById(this.app, 'command-palette') as CommandPalettePluginInstance;
-			if (commandPalette) {
-				this._uninstallWrapper.onChooseItem = around(commandPalette.modal, {
-					onChooseItem(orgMethod): (command: Command, ev: Event) => boolean {
-						return (command: Command, ev: Event) => {
-							handlingDatabase(command, RUN_TYPE.cmdPalette);
-							return orgMethod && orgMethod.call(this, command, ev);
-						};
-					},
-				});
-			}
-		});
+      const commandPalette = getEnabledPluginById(
+        this.app,
+        'command-palette',
+      ) as CommandPalettePluginInstance;
+      if (commandPalette) {
+        this._uninstallWrapper.onChooseItem = around(commandPalette.modal, {
+          onChooseItem(orgMethod): (command: Command, ev: Event) => boolean {
+            return (command: Command, ev: Event) => {
+              handlingDatabase(command, RUN_TYPE.cmdPalette);
+              return orgMethod && orgMethod.call(this, command, ev);
+            };
+          },
+        });
+      }
+    });
 
-		this.saveCurrentVersionNumber();
-	}
+    this.saveCurrentVersionNumber();
+  }
 
-	async onunload(): Promise<void> {
-		if (this._uninstallWrapper.executeCommand) {
-			this._uninstallWrapper.executeCommand();
-			this._uninstallWrapper.executeCommand = undefined;
-		}
-		if (this._uninstallWrapper.onChooseItem) {
-			this._uninstallWrapper.onChooseItem();
-			this._uninstallWrapper.onChooseItem = undefined;
-		}
-		if (Platform.isDesktopApp && this.settings.viewCommandTracker?.isProtectData) {
-			this._db.close();
-		} else {
-			await this._db.deleteDatabase();
-		}
-	}
+  async onunload(): Promise<void> {
+    if (this._uninstallWrapper.executeCommand) {
+      this._uninstallWrapper.executeCommand();
+      this._uninstallWrapper.executeCommand = undefined;
+    }
+    if (this._uninstallWrapper.onChooseItem) {
+      this._uninstallWrapper.onChooseItem();
+      this._uninstallWrapper.onChooseItem = undefined;
+    }
+    if (Platform.isDesktopApp && this.settings.viewCommandTracker?.isProtectData) {
+      this._db.close();
+    } else {
+      await this._db.deleteDatabase();
+    }
+  }
 
-	async loadSettings(): Promise<void> {
-		const loadData = await this.loadData();
-		this.settings = {
-			...DEFAULT_SETTINGS,
-			...loadData,
-			viewCommandTracker: { ...DEFAULT_SETTINGS.viewCommandTracker, ...loadData?.viewCommandTracker || {} },
-		};
-		await this.saveSettings();
-	}
+  async loadSettings(): Promise<void> {
+    const loadData = await this.loadData();
+    this.settings = {
+      ...DEFAULT_SETTINGS,
+      ...loadData,
+      viewCommandTracker: {
+        ...DEFAULT_SETTINGS.viewCommandTracker,
+        ...(loadData?.viewCommandTracker || {}),
+      },
+    };
+    await this.saveSettings();
+  }
 
-	async saveSettings(): Promise<void> {
-		await this.saveData(this.settings);
-	}
+  async saveSettings(): Promise<void> {
+    await this.saveData(this.settings);
+  }
 
-	private async viewCommandTracker(): Promise<void> {
-		await this.app.workspace.getLeaf(true).setViewState({ type: VIEW_TYPE_COMMAND_TRACKER, active: true });
-	}
+  private async viewCommandTracker(): Promise<void> {
+    await this.app.workspace
+      .getLeaf(true)
+      .setViewState({ type: VIEW_TYPE_COMMAND_TRACKER, active: true });
+  }
 
-	private async handlingDatabase(command: Command, runType: RunType): Promise<void> {
-		if (this.settings.viewCommandTracker.isStopTracing) {
-			return;
-		}
-		await this.deleteRecords();
-		await this.registerRecord(command, runType);
-	}
+  private async handlingDatabase(command: Command, runType: RunType): Promise<void> {
+    if (this.settings.viewCommandTracker.isStopTracing) {
+      return;
+    }
+    await this.deleteRecords();
+    await this.registerRecord(command, runType);
+  }
 
-	private async deleteRecords(): Promise<void> {
-		const records = await this._db.getAll();
-		const maximumRecords = this.settings.viewCommandTracker.maximumRecords;
-		if (records.length >= maximumRecords) {
-			const referenceUid = records.length - maximumRecords + (records[0].uid ?? 0);
-			await this._db.deleteExceededRecords(referenceUid);
-		}
-		const retentionPeriod = this.settings.viewCommandTracker.retentionPeriod;
-		const referenceDate = parseInt(dayjs().subtract(retentionPeriod, 'd').format('YYYYMMDD'), 10);
-		await this._db.deleteOverdueRecords(referenceDate);
-	}
+  private async deleteRecords(): Promise<void> {
+    const records = await this._db.getAll();
+    const maximumRecords = this.settings.viewCommandTracker.maximumRecords;
+    if (records.length >= maximumRecords) {
+      const referenceUid = records.length - maximumRecords + (records[0].uid ?? 0);
+      await this._db.deleteExceededRecords(referenceUid);
+    }
+    const retentionPeriod = this.settings.viewCommandTracker.retentionPeriod;
+    const referenceDate = parseInt(dayjs().subtract(retentionPeriod, 'd').format('YYYYMMDD'), 10);
+    await this._db.deleteOverdueRecords(referenceDate);
+  }
 
-	private async registerRecord(command: Command, runType: RunType): Promise<void> {
-		const date = parseInt(dayjs().format('YYYYMMDD'), 10);
-		const usedCommands = await this._db.searchSameDateAndId(date, command.id);
-		const usedCommand = usedCommands.length ? usedCommands[0] : null;
-		if (usedCommand) {
-			const { uid = 0, hotkeyCount = 0, cmdPaletteCount = 0 } = usedCommand;
-			if (runType === RUN_TYPE.hotkey) {
-				await this._db.update(uid, { hotkeyCount: hotkeyCount + 1 });
-			} else {
-				await this._db.update(uid, { cmdPaletteCount: cmdPaletteCount + 1 });
-			}
-		} else {
-			const counts = {
-				hotkeyCount: runType === RUN_TYPE.hotkey ? 1 : 0,
-				cmdPaletteCount: runType === RUN_TYPE.cmdPalette ? 1 : 0,
-			};
-			await this._db.add({ id: command.id, date, ...counts });
-		}
-	}
+  private async registerRecord(command: Command, runType: RunType): Promise<void> {
+    const date = parseInt(dayjs().format('YYYYMMDD'), 10);
+    const usedCommands = await this._db.searchSameDateAndId(date, command.id);
+    const usedCommand = usedCommands.length ? usedCommands[0] : null;
+    if (usedCommand) {
+      const { uid = 0, hotkeyCount = 0, cmdPaletteCount = 0 } = usedCommand;
+      if (runType === RUN_TYPE.hotkey) {
+        await this._db.update(uid, { hotkeyCount: hotkeyCount + 1 });
+      } else {
+        await this._db.update(uid, { cmdPaletteCount: cmdPaletteCount + 1 });
+      }
+    } else {
+      const counts = {
+        hotkeyCount: runType === RUN_TYPE.hotkey ? 1 : 0,
+        cmdPaletteCount: runType === RUN_TYPE.cmdPalette ? 1 : 0,
+      };
+      await this._db.add({ id: command.id, date, ...counts });
+    }
+  }
 
-	private async saveCurrentVersionNumber(): Promise<void> {
-		const currentVersion = this.manifest.version;
-		const knownVersion = this.settings.viewCommandTracker.version;
-		if (knownVersion) {
-			if (currentVersion !== knownVersion) {
-				this.settings.viewCommandTracker.version = currentVersion;
-				await this.saveSettings();
-				new ConfirmReloadModal(this.app).open();
-			}
-		} else {
-			this.settings.viewCommandTracker.version = currentVersion;
-			await this.saveSettings();
-		}
-	}
+  private async saveCurrentVersionNumber(): Promise<void> {
+    const currentVersion = this.manifest.version;
+    const knownVersion = this.settings.viewCommandTracker.version;
+    if (knownVersion) {
+      if (currentVersion !== knownVersion) {
+        this.settings.viewCommandTracker.version = currentVersion;
+        await this.saveSettings();
+        new ConfirmReloadModal(this.app).open();
+      }
+    } else {
+      this.settings.viewCommandTracker.version = currentVersion;
+      await this.saveSettings();
+    }
+  }
 }
