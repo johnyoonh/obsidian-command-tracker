@@ -67,9 +67,9 @@ export default class CommandTracker extends Plugin {
       if (commandPalette) {
         this._uninstallWrapper.onChooseItem = around(commandPalette.modal, {
           onChooseItem(orgMethod): (command: Command, ev: Event) => boolean {
-            return (command: Command, ev: Event) => {
+            return function (command: Command, ev: Event): boolean {
               handlingDatabase(command, RUN_TYPE.cmdPalette);
-              return orgMethod && orgMethod.call(this, command, ev);
+              return orgMethod ? orgMethod.call(this, command, ev) : true;
             };
           },
         });
