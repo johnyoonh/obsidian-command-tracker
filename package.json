@@ -1,7 +1,7 @@
 {
   "name": "obsidian-command-tracker",
   "version": "0.3.4",
-  "description": "This is an Obsidian plugin which tracks the number of times the command is used.",
+  "description": "An Obsidian plugin that tracks the number of times the command is used.",
   "main": "main.js",
   "scripts": {
     "dev": "run-p esbuild sass-build",

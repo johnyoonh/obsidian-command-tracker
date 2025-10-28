@@ -1,6 +1,6 @@
-# Obsidian Command Tracker
+# Command Tracker
 
-This is an [Obsidian](https://obsidian.md/) plugin which tracks the number of times the command is used.
+An [Obsidian](https://obsidian.md/) plugin that tracks the number of times the command is used.
 
 This plugin helps optimize the plugins and hotkeys used.  
 You can check the date of last use of each command and how much times each command is used daily.
