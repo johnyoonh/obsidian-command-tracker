@@ -24,7 +24,9 @@ You can check the date of last use of each command and how much times each comma
 >   - Example, select from the Ribbon, execute by UI operation and etc...
 > - Known bugs:
 >   - When you restart Obsidian with the `Command Tracker View` tab open, the hotkeys don't appear in the table.
->     - If you close and reopen the `Command Tracker View` tab, the hot keys will appear in the table.
+>     - If you close and reopen the `Command Tracker View` tab, the hotkeys will appear in the table.
+>   - When you open the `Command Tracker View` tab without a keyboard connected, the hotkeys don't appear in the table.
+>     - After connecting a keyboard, close and reopen the `Command Tracker View` tab to show the hotkeys.
 
 > [!TIP]
 >
