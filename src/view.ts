@@ -175,9 +175,11 @@ export class CommandTrackerView extends ItemView {
           button.setText('Refresh');
           button.onclick = async (): Promise<void> => {
             this._records = await this._db.getAll();
-            this._viewType === VIEW_TYPE.perCmd
-              ? this.displayRecordsPerCommand()
-              : this.displayRecordsPerCommandAndDaily();
+            if (this._viewType === VIEW_TYPE.perCmd) {
+              this.displayRecordsPerCommand();
+            } else {
+              this.displayRecordsPerCommandAndDaily();
+            }
           };
         });
       });
@@ -193,9 +195,11 @@ export class CommandTrackerView extends ItemView {
             .setValue(this._viewSettings.viewType)
             .onChange((value: ViewType) => {
               this._viewType = value;
-              value === VIEW_TYPE.perCmd
-                ? this.displayRecordsPerCommand()
-                : this.displayRecordsPerCommandAndDaily();
+              if (value === VIEW_TYPE.perCmd) {
+                this.displayRecordsPerCommand();
+              } else {
+                this.displayRecordsPerCommandAndDaily();
+              }
             }),
         );
     });
