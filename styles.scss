@@ -146,3 +146,42 @@ body.is-phone .ct-view-content {
     }
   }
 }
+
+.ct-custom-menu-popup {
+  position: absolute;
+  padding: 4px;
+  min-width: 200px;
+  background-color: var(--background-primary);
+  border: 1px solid var(--background-modifier-border);
+  border-radius: var(--radius-m);
+  box-shadow: var(--shadow-s);
+  z-index: var(--layer-menu);
+
+  & > .ct-custom-menu-item {
+    cursor: pointer;
+    font-size: var(--font-ui-small);
+    border-radius: var(--radius-s);
+    padding: 6px 12px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+
+    &:hover {
+      background-color: var(--background-modifier-hover);
+    }
+
+    & > .ct-custom-menu-icon {
+      color: var(--icon-color);
+      width: 18px;
+      height: 18px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+
+      > svg {
+        width: 16px;
+        height: 16px;
+      }
+    }
+  }
+}

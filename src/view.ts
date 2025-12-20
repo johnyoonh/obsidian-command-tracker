@@ -5,6 +5,7 @@ import {
   ColDef,
   ColumnApiModule,
   ColGroupDef,
+  CsvExportModule,
   GridApi,
   ITextFilterParams,
   ModuleRegistry,
@@ -17,7 +18,7 @@ import {
   DateFilterModule,
 } from 'ag-grid-community';
 
-import { ItemView, Notice, Platform, Setting, WorkspaceLeaf } from 'obsidian';
+import { ItemView, Menu, Notice, Platform, setIcon, Setting, WorkspaceLeaf } from 'obsidian';
 import { CommandTrackerDatabase, IHotkey } from './database';
 import { CustomApp, Command, ViewType } from './types';
 import {
@@ -33,6 +34,7 @@ export const VIEW_TYPE_COMMAND_TRACKER = 'command-tracker-view';
 ModuleRegistry.registerModules([
   ClientSideRowModelModule,
   ColumnApiModule,
+  CsvExportModule,
   DateFilterModule,
   NumberFilterModule,
   TextFilterModule,
@@ -179,49 +181,160 @@ export class CommandTrackerView extends ItemView {
     this.containerEl.createDiv('ct-view-header', (el) => {
       el.createDiv('ct-first-line', (div) => {
         div.createEl('h6', { text: 'Command tracker view' });
-        div.createEl('button', '', (button) => {
-          button.setText('Refresh');
-          button.onclick = async (): Promise<void> => {
-            this._records = await this._db.getAll();
-            if (this._viewType === VIEW_TYPE.perCmd) {
-              this.displayRecordsPerCommand();
-            } else {
-              this.displayRecordsPerCommandAndDaily();
-            }
+        this.generateMenu(div);
+      });
+      this.generateViewOptionsSection(el);
+    });
+  }
+
+  private generateMenu(el: HTMLDivElement): void {
+    el.createEl('button', '', (button) => {
+      setIcon(button, 'more-horizontal');
+
+      button.onclick = () => {
+        const existing = document.querySelector('.ct-custom-menu-popup');
+        if (existing) {
+          existing.remove();
+          return;
+        }
+
+        const popup = document.body.createDiv({ cls: 'ct-custom-menu-popup' });
+
+        const rect = button.getBoundingClientRect();
+        popup.style.top = `${rect.bottom + window.scrollY + 5}px`;
+        const offsetFromRight = window.innerWidth - rect.right;
+        popup.style.right = `${offsetFromRight}px`;
+
+        const items = [
+          {
+            label: 'Refresh data',
+            icon: 'refresh-cw',
+            action: () => this.refreshData(),
+          },
+          {
+            label: 'Reset sorts and filters',
+            icon: 'rotate-ccw',
+            action: () => this.resetGrid(),
+          },
+          {
+            label: 'Copy as CSV',
+            icon: 'copy',
+            action: () => this.copyToClipboard(),
+          },
+        ];
+        if (Platform.isDesktopApp) {
+          items.push({
+            label: 'Export as CSV',
+            icon: 'download',
+            action: async () => await this.exportCSV(),
+          });
+        }
+
+        items.forEach((item) => {
+          const itemEl = popup.createDiv({ cls: 'ct-custom-menu-item' });
+          const iconEl = itemEl.createDiv({ cls: 'ct-custom-menu-icon' });
+          setIcon(iconEl, item.icon);
+          itemEl.createSpan({ text: item.label });
+
+          itemEl.onclick = () => {
+            item.action();
+            popup.remove();
           };
         });
+
+        const closePopup = (event: MouseEvent) => {
+          if (!popup.contains(event.target as Node) && event.target !== button) {
+            popup.remove();
+            document.removeEventListener('click', closePopup);
+          }
+        };
+        setTimeout(() => document.addEventListener('click', closePopup), 0);
+      };
+    });
+  }
+
+  private refreshData(): void {
+    this._db.getAll().then((data) => {
+      this._records = data;
+      if (this._viewType === VIEW_TYPE.perCmd) {
+        this.displayRecordsPerCommand();
+      } else {
+        this.displayRecordsPerCommandAndDaily();
+      }
+      new Notice('The view data has been refreshed.');
+    });
+  }
+
+  private resetGrid(): void {
+    this._gridApi.applyColumnState({
+      defaultState: { sort: null },
+    });
+    this._gridApi.setFilterModel(null);
+    new Notice('The sorts and filters have been reset.');
+  }
+
+  private copyToClipboard(): void {
+    const csv = this._gridApi.getDataAsCsv();
+    if (!csv) {
+      new Notice('Failed to copy the view data as CSV to clipboard.');
+      return;
+    }
+    if (navigator.clipboard) {
+      navigator.clipboard.writeText(csv).then(() => {
+        new Notice('Copied the view data as CSV to clipboard.');
       });
+    }
+  }
 
-      el.createEl('details', '', (detailsEl) => {
-        detailsEl.createEl('summary', '', (summaryEl) => {
-          summaryEl.setText('View options');
+  private async exportCSV(): Promise<void> {
+    const csv = this._gridApi.getDataAsCsv();
+    if (!csv) {
+      new Notice('Failed to export the view data as CSV file.');
+      return;
+    }
 
-          new Setting(detailsEl).setName(`• Specify view type`).addDropdown((dropdown) =>
-            dropdown
-              .addOptions({
-                [VIEW_TYPE.perCmd]: VIEW_TYPE.perCmd,
-                [VIEW_TYPE.perCmdAndDay]: VIEW_TYPE.perCmdAndDay,
-              })
-              .setValue(this._viewSettings.viewType)
-              .onChange((value: ViewType) => {
-                this._viewType = value;
-                if (value === VIEW_TYPE.perCmd) {
-                  this.displayRecordsPerCommand();
-                } else {
-                  this.displayRecordsPerCommandAndDaily();
-                }
-              }),
-          );
+    const fileName = 'command-tracker-export.csv';
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.setAttribute('href', url);
+    link.setAttribute('download', fileName);
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  }
 
-          const showColumnsWrapper = detailsEl.createDiv('ct-show-columns-wrapper');
-          showColumnsWrapper.createSpan('').setText('• Show columns');
-          showColumnsWrapper.createDiv('', (div) => {
-            CONFIGURABLE_COLUMNS.forEach(({ name, field }) => {
-              new Setting(div).setName(`• ${name}`).addToggle((toggle) => {
-                toggle
-                  .setValue(!this._viewSettings.hiddenColumns.includes(field))
-                  .onChange((value) => this._gridApi.setColumnsVisible([field], value));
-              });
+  private generateViewOptionsSection(el: HTMLDivElement): void {
+    el.createEl('details', '', (detailsEl) => {
+      detailsEl.createEl('summary', '', (summaryEl) => {
+        summaryEl.setText('View options');
+
+        new Setting(detailsEl).setName(`• Specify view type`).addDropdown((dropdown) =>
+          dropdown
+            .addOptions({
+              [VIEW_TYPE.perCmd]: VIEW_TYPE.perCmd,
+              [VIEW_TYPE.perCmdAndDay]: VIEW_TYPE.perCmdAndDay,
+            })
+            .setValue(this._viewSettings.viewType)
+            .onChange((value: ViewType) => {
+              this._viewType = value;
+              if (value === VIEW_TYPE.perCmd) {
+                this.displayRecordsPerCommand();
+              } else {
+                this.displayRecordsPerCommandAndDaily();
+              }
+            }),
+        );
+
+        const showColumnsWrapper = detailsEl.createDiv('ct-show-columns-wrapper');
+        showColumnsWrapper.createSpan('').setText('• Show columns');
+        showColumnsWrapper.createDiv('', (div) => {
+          CONFIGURABLE_COLUMNS.forEach(({ name, field }) => {
+            new Setting(div).setName(`• ${name}`).addToggle((toggle) => {
+              toggle
+                .setValue(!this._viewSettings.hiddenColumns.includes(field))
+                .onChange((value) => this._gridApi.setColumnsVisible([field], value));
             });
           });
         });
