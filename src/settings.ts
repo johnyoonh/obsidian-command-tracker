@@ -9,6 +9,7 @@ const SETTING_TYPE = {
 
 export interface ViewCommandTrackerSettings {
   viewType: string;
+  hiddenColumns: string[];
   dateFormat: string;
   isProtectData: boolean;
   isStopTracing: boolean;
@@ -36,8 +37,17 @@ export const MAXIMUM_RECORD_COUNT: number[] = [2000, 3000, 4000];
 
 export const RETENTION_PERIOD: number[] = [60, 90, 180, 365];
 
+export const CONFIGURABLE_COLUMNS = [
+  { name: 'Hotkeys', field: 'hotkeys' },
+  { name: 'Date', field: 'date' },
+  { name: 'Count > Total', field: 'totalCount' },
+  { name: 'Count > Hotkeys', field: 'hotkeyCount' },
+  { name: 'Count > Command palette', field: 'cmdPaletteCount' },
+];
+
 const VIEW_COMMAND_TRACKER_DEFAULT_SETTINGS = {
   viewType: VIEW_TYPE.perCmd,
+  hiddenColumns: [] as string[],
   dateFormat: DATE_FORMAT.yyyymmdd,
   isProtectData: false,
   isStopTracing: false,
@@ -100,6 +110,29 @@ export class SettingTab extends PluginSettingTab {
         const setDefaultValue = () => (settings.viewType = DEFAULT_SETTINGS[settingType].viewType);
         this.addResetButton(settingEl, setDefaultValue);
       });
+
+    new Setting(containerEl)
+      .setName('Initial show columns')
+      .setHeading()
+      .setDesc('Select the columns to be shown in the table initially.');
+
+    CONFIGURABLE_COLUMNS.forEach(({ name, field }) => {
+      new Setting(containerEl)
+        .setName(name)
+        .addToggle((toggle) =>
+          toggle.setValue(!settings.hiddenColumns.includes(field)).onChange(async (value) => {
+            if (value) {
+              settings.hiddenColumns = settings.hiddenColumns.filter((col) => col !== field);
+            } else {
+              if (!settings.hiddenColumns.includes(field)) {
+                settings.hiddenColumns.push(field);
+              }
+            }
+            await this._plugin.saveSettings();
+          }),
+        )
+        .setClass('ct-toggle-show-column');
+    });
 
     new Setting(containerEl)
       .setName(`Date format`)

@@ -3,6 +3,7 @@ import {
   CellClickedEvent,
   ClientSideRowModelModule,
   ColDef,
+  ColumnApiModule,
   ColGroupDef,
   GridApi,
   ITextFilterParams,
@@ -19,12 +20,19 @@ import {
 import { ItemView, Notice, Platform, Setting, WorkspaceLeaf } from 'obsidian';
 import { CommandTrackerDatabase, IHotkey } from './database';
 import { CustomApp, Command, ViewType } from './types';
-import { DATE_FORMAT, Settings, VIEW_TYPE, ViewCommandTrackerSettings } from './settings';
+import {
+  DATE_FORMAT,
+  Settings,
+  CONFIGURABLE_COLUMNS,
+  VIEW_TYPE,
+  ViewCommandTrackerSettings,
+} from './settings';
 
 export const VIEW_TYPE_COMMAND_TRACKER = 'command-tracker-view';
 
 ModuleRegistry.registerModules([
   ClientSideRowModelModule,
+  ColumnApiModule,
   DateFilterModule,
   NumberFilterModule,
   TextFilterModule,
@@ -184,24 +192,40 @@ export class CommandTrackerView extends ItemView {
         });
       });
 
-      new Setting(el.createDiv('ct-view-selector'))
-        .setName(`Specify view type`)
-        .addDropdown((dropdown) =>
-          dropdown
-            .addOptions({
-              [VIEW_TYPE.perCmd]: VIEW_TYPE.perCmd,
-              [VIEW_TYPE.perCmdAndDay]: VIEW_TYPE.perCmdAndDay,
-            })
-            .setValue(this._viewSettings.viewType)
-            .onChange((value: ViewType) => {
-              this._viewType = value;
-              if (value === VIEW_TYPE.perCmd) {
-                this.displayRecordsPerCommand();
-              } else {
-                this.displayRecordsPerCommandAndDaily();
-              }
-            }),
-        );
+      el.createEl('details', '', (detailsEl) => {
+        detailsEl.createEl('summary', '', (summaryEl) => {
+          summaryEl.setText('View options');
+
+          new Setting(detailsEl).setName(`• Specify view type`).addDropdown((dropdown) =>
+            dropdown
+              .addOptions({
+                [VIEW_TYPE.perCmd]: VIEW_TYPE.perCmd,
+                [VIEW_TYPE.perCmdAndDay]: VIEW_TYPE.perCmdAndDay,
+              })
+              .setValue(this._viewSettings.viewType)
+              .onChange((value: ViewType) => {
+                this._viewType = value;
+                if (value === VIEW_TYPE.perCmd) {
+                  this.displayRecordsPerCommand();
+                } else {
+                  this.displayRecordsPerCommandAndDaily();
+                }
+              }),
+          );
+
+          const showColumnsWrapper = detailsEl.createDiv('ct-show-columns-wrapper');
+          showColumnsWrapper.createSpan('').setText('• Show columns');
+          showColumnsWrapper.createDiv('', (div) => {
+            CONFIGURABLE_COLUMNS.forEach(({ name, field }) => {
+              new Setting(div).setName(`• ${name}`).addToggle((toggle) => {
+                toggle
+                  .setValue(!this._viewSettings.hiddenColumns.includes(field))
+                  .onChange((value) => this._gridApi.setColumnsVisible([field], value));
+              });
+            });
+          });
+        });
+      });
     });
   }
 
@@ -256,7 +280,7 @@ export class CommandTrackerView extends ItemView {
           buttons: ['clear'],
         } as ITextFilterParams,
         flex: 5,
-        minWidth: 320,
+        minWidth: 280,
         suppressMovable: true,
       },
       {
@@ -270,6 +294,7 @@ export class CommandTrackerView extends ItemView {
         flex: 2,
         minWidth: 120,
         suppressMovable: true,
+        hide: this._viewSettings.hiddenColumns.includes('hotkeys'),
       },
       {
         headerName: this._viewType === VIEW_TYPE.perCmd ? 'Date of last use' : 'Date of use',
@@ -291,6 +316,7 @@ export class CommandTrackerView extends ItemView {
         flex: 2,
         minWidth: 160,
         suppressMovable: true,
+        hide: this._viewSettings.hiddenColumns.includes('date'),
       },
       {
         headerName: 'Count',
@@ -310,6 +336,7 @@ export class CommandTrackerView extends ItemView {
             width: 110,
             valueGetter: (p) => (p.data.hotkeyCount ?? 0) + (p.data.cmdPaletteCount ?? 0),
             suppressMovable: true,
+            hide: this._viewSettings.hiddenColumns.includes('totalCount'),
           },
           {
             headerName: 'Hotkeys',
@@ -322,6 +349,7 @@ export class CommandTrackerView extends ItemView {
             width: 110,
             columnGroupShow: 'open',
             suppressMovable: true,
+            hide: this._viewSettings.hiddenColumns.includes('hotkeyCount'),
           },
           {
             headerName: 'Command palette',
@@ -334,6 +362,7 @@ export class CommandTrackerView extends ItemView {
             width: 170,
             columnGroupShow: 'open',
             suppressMovable: true,
+            hide: this._viewSettings.hiddenColumns.includes('cmdPaletteCount'),
           },
         ],
       },

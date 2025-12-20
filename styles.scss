@@ -1,6 +1,6 @@
 // For Command Tracker
 .ct-view-content {
-  padding: 1rem;
+  padding: 0 1rem 1rem;
 
   & .ct-first-line {
     display: flex;
@@ -13,10 +13,59 @@
     }
   }
 
-  & .ct-view-selector {
-    font-weight: bold;
-    width: max-content;
-    max-width: 100%;
+  & details {
+    position: relative;
+    width: 100%;
+    margin: 0 0 0.5rem auto;
+    border: 1px solid var(--background-modifier-border-focus);
+
+    & summary {
+      cursor: pointer;
+      line-height: 3rem;
+      padding: 0 0.5rem;
+      display: flex;
+      justify-content: space-between;
+      list-style: none;
+
+      position: sticky;
+      top: 0;
+      z-index: 1;
+      background-color: var(--background-primary);
+      border: 1px solid var(--background-modifier-border-focus);
+
+      &::after {
+        content: '-';
+        font-size: 1rem;
+        transition: transform 0.2s;
+        margin-right: 0.5rem;
+      }
+    }
+
+    &[open] summary::after {
+      content: '+';
+      transform: rotate(720deg);
+      display: flex;
+      align-items: center;
+    }
+
+    & > .setting-item {
+      width: 50%;
+      margin: 0.5rem;
+    }
+
+    & > .ct-show-columns-wrapper {
+      margin: 0.5rem;
+
+      > span {
+        display: inline-block;
+        margin-bottom: 0.75rem;
+      }
+
+      > div {
+        max-width: calc(50% - 1rem);
+        margin-left: 1rem;
+      }
+    }
   }
 
   & .ct-table {
@@ -28,8 +77,20 @@
 body.is-phone .ct-view-content {
   overflow-y: scroll;
 
-  & .ct-view-selector {
-    width: 100%;
+  & details {
+    & > .setting-item {
+      width: calc(100% - 1rem);
+    }
+
+    & > .ct-show-columns-wrapper {
+      margin: 0 0.5rem;
+
+      > div {
+        max-width: calc(100% - 2rem);
+        margin-left: 1rem;
+        font-weight: initial;
+      }
+    }
   }
 
   & .ct-table {
@@ -61,6 +122,10 @@ body.is-phone .ct-view-content {
 }
 
 .ct-settings {
+  & .ct-toggle-show-column {
+    padding-left: 2rem;
+  }
+
   & .ct-delete-input {
     width: 5rem;
     min-width: 5rem;
