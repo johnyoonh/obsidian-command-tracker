@@ -18,7 +18,7 @@ import {
   DateFilterModule,
 } from 'ag-grid-community';
 
-import { ItemView, Menu, Notice, Platform, setIcon, Setting, WorkspaceLeaf } from 'obsidian';
+import { ItemView, Notice, Platform, setIcon, Setting, WorkspaceLeaf } from 'obsidian';
 import { CommandTrackerDatabase, IHotkey } from './database';
 import { CustomApp, Command, ViewType } from './types';
 import {
@@ -434,9 +434,7 @@ export class CommandTrackerView extends ItemView {
       {
         headerName: 'Count',
         groupId: 'count',
-        openByDefault:
-          this._gridApi.getColumnGroupState().find((colGrp) => colGrp.groupId === 'count')?.open ??
-          true,
+        marryChildren: true,
         children: [
           {
             headerName: 'Total',
@@ -460,7 +458,6 @@ export class CommandTrackerView extends ItemView {
               buttons: ['clear'],
             } as ITextFilterParams,
             width: 110,
-            columnGroupShow: 'open',
             suppressMovable: true,
             hide: this._viewSettings.hiddenColumns.includes('hotkeyCount'),
           },
@@ -473,7 +470,6 @@ export class CommandTrackerView extends ItemView {
               buttons: ['clear'],
             } as ITextFilterParams,
             width: 170,
-            columnGroupShow: 'open',
             suppressMovable: true,
             hide: this._viewSettings.hiddenColumns.includes('cmdPaletteCount'),
           },

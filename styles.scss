@@ -31,21 +31,25 @@
       top: 0;
       z-index: 1;
       background-color: var(--background-primary);
-      border: 1px solid var(--background-modifier-border-focus);
+      border-bottom: none;
 
       &::after {
-        content: '-';
+        content: '+';
         font-size: 1rem;
         transition: transform 0.2s;
         margin-right: 0.5rem;
       }
     }
 
-    &[open] summary::after {
-      content: '+';
-      transform: rotate(720deg);
-      display: flex;
-      align-items: center;
+    &[open] summary {
+      border-bottom: 1px solid var(--background-modifier-border-focus);
+
+      &::after {
+        content: '-';
+        transform: rotate(720deg);
+        display: flex;
+        align-items: center;
+      }
     }
 
     & > .setting-item {
