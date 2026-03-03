@@ -1,7 +1,7 @@
 import dayjs from 'dayjs';
 import customParseFormat from 'dayjs/plugin/customParseFormat';
 import { around } from 'monkey-around';
-import { App, Platform, Plugin } from 'obsidian';
+import { App, Notice, Platform, Plugin } from 'obsidian';
 import { DEFAULT_SETTINGS, SettingTab, Settings } from './settings';
 import { CustomApp, CommandPalettePluginInstance, Command, PluginInstance } from './types';
 import { CommandTrackerView, VIEW_TYPE_COMMAND_TRACKER } from './view';
@@ -42,6 +42,46 @@ export default class CommandTracker extends Plugin {
       id: 'view-command-tracker',
       name: 'View command tracker',
       callback: async () => this.viewCommandTracker(),
+    });
+
+    this.addCommand({
+      id: 'export-command-tracker-json',
+      name: 'Export command tracker data as JSON',
+      callback: async () => {
+        const records = await this._db.getAll();
+
+        // Aggregate counts per command ID (sum across all dates)
+        const summary = records.reduce(
+          (acc, rec) => {
+            if (!rec.id) return acc;
+            acc[rec.id] = acc[rec.id] ?? { hotkeyCount: 0, cmdPaletteCount: 0 };
+            acc[rec.id].hotkeyCount += rec.hotkeyCount ?? 0;
+            acc[rec.id].cmdPaletteCount += rec.cmdPaletteCount ?? 0;
+            return acc;
+          },
+          {} as Record<string, { hotkeyCount: number; cmdPaletteCount: number }>,
+        );
+
+        // Resolve output path
+        const exportPath = (this.settings.viewCommandTracker.exportPath ?? '').trim();
+        const fileName = 'command-tracker-export.json';
+        const filePath = exportPath
+          ? `${exportPath.replace(/\/$/, '')}/${fileName}`
+          : fileName;
+
+        // Ensure directory exists if a sub-path was specified
+        if (exportPath) {
+          const dir = exportPath.replace(/\/$/, '');
+          const dirExists = await this.app.vault.adapter.exists(dir);
+          if (!dirExists) {
+            await this.app.vault.adapter.mkdir(dir);
+          }
+        }
+
+        const output = JSON.stringify(summary, null, 2);
+        await this.app.vault.adapter.write(filePath, output);
+        new Notice(`Command tracker data exported to ${filePath}`);
+      },
     });
 
     this._settingTab = new SettingTab(this.app, this);

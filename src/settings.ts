@@ -15,6 +15,7 @@ export interface ViewCommandTrackerSettings {
   isStopTracing: boolean;
   maximumRecords: number;
   retentionPeriod: number;
+  exportPath: string;
   version: string;
 }
 
@@ -53,6 +54,7 @@ const VIEW_COMMAND_TRACKER_DEFAULT_SETTINGS = {
   isStopTracing: false,
   maximumRecords: 2000,
   retentionPeriod: 60,
+  exportPath: '',
   version: '',
 } as const;
 
@@ -240,6 +242,26 @@ export class SettingTab extends PluginSettingTab {
       .then((settingEl) => {
         const setDefaultValue = () =>
           (settings.retentionPeriod = DEFAULT_SETTINGS[settingType].retentionPeriod);
+        this.addResetButton(settingEl, setDefaultValue);
+      });
+
+    new Setting(containerEl)
+      .setName('Export output path')
+      .setDesc(
+        'Directory path (relative to vault root) where the JSON export file will be written. Leave blank to write to the vault root. Example: exports/',
+      )
+      .addText((text) =>
+        text
+          .setPlaceholder('e.g. exports/')
+          .setValue(settings.exportPath)
+          .onChange(async (value) => {
+            settings.exportPath = value.trim();
+            await this._plugin.saveSettings();
+          }),
+      )
+      .then((settingEl) => {
+        const setDefaultValue = () =>
+          (settings.exportPath = DEFAULT_SETTINGS[settingType].exportPath);
         this.addResetButton(settingEl, setDefaultValue);
       });
 
